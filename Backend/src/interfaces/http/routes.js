@@ -8,8 +8,8 @@ const router = express.Router();
 // Auth Routes
 router.post('/auth/login', async (req, res) => {
     try {
-        const { walletAddress } = req.body;
-        const user = await AuthService.login(walletAddress);
+        const { walletAddress, name, email, role } = req.body;
+        const user = await AuthService.login(walletAddress, { name, email, role });
         res.json(user);
     } catch (error) {
         res.status(400).json({ error: error.message });
