@@ -32,7 +32,7 @@ const api = {
     }),
     redeem: (token, rewardId) => fetch(`${API_URL}/student/redeem`, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
@@ -51,7 +51,7 @@ const api = {
     }),
     createReward: (token, data) => fetch(`${API_URL}/admin/rewards`, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
@@ -127,17 +127,17 @@ export default function CampusWallet() {
 function Navbar({ user, view, setView, onLogout }) {
   const [mobileMenu, setMobileMenu] = useState(false);
 
-  const menuItems = user?.role === 'admin' 
+  const menuItems = user?.role === 'admin'
     ? [
-        { id: 'admin-dashboard', label: 'Dashboard', icon: BarChart3 },
-        { id: 'manage-rewards', label: 'Rewards', icon: Gift },
-        { id: 'upload-attendance', label: 'Upload', icon: Upload }
-      ]
+      { id: 'admin-dashboard', label: 'Dashboard', icon: BarChart3 },
+      { id: 'manage-rewards', label: 'Rewards', icon: Gift },
+      { id: 'upload-attendance', label: 'Upload', icon: Upload }
+    ]
     : [
-        { id: 'student-dashboard', label: 'Wallet', icon: Wallet },
-        { id: 'marketplace', label: 'Marketplace', icon: Gift },
-        { id: 'ledger', label: 'History', icon: TrendingUp }
-      ];
+      { id: 'student-dashboard', label: 'Wallet', icon: Wallet },
+      { id: 'marketplace', label: 'Marketplace', icon: Gift },
+      { id: 'ledger', label: 'History', icon: TrendingUp }
+    ];
 
   return (
     <nav className="bg-white shadow-lg">
@@ -155,11 +155,10 @@ function Navbar({ user, view, setView, onLogout }) {
                 <button
                   key={item.id}
                   onClick={() => setView(item.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
-                    view === item.id 
-                      ? 'bg-indigo-600 text-white' 
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${view === item.id
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span>{item.label}</span>
@@ -188,9 +187,8 @@ function Navbar({ user, view, setView, onLogout }) {
                 <button
                   key={item.id}
                   onClick={() => { setView(item.id); setMobileMenu(false); }}
-                  className={`flex items-center space-x-2 w-full px-4 py-3 ${
-                    view === item.id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
-                  }`}
+                  className={`flex items-center space-x-2 w-full px-4 py-3 ${view === item.id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span>{item.label}</span>
@@ -277,6 +275,38 @@ function AuthPage({ setToken, setUser, setView }) {
     setError('');
     setLoading(true);
 
+    // Regex Patterns
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/; // Min 8 chars, 1 letter, 1 number
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    const rollNumberRegex = /^[a-zA-Z0-9]+$/;
+
+    // Validation
+    if (!emailRegex.test(formData.email)) {
+      setError('Invalid email address');
+      setLoading(false);
+      return;
+    }
+
+    if (!passwordRegex.test(formData.password)) {
+      setError('Password must be at least 8 characters long and contain at least one letter and one number');
+      setLoading(false);
+      return;
+    }
+
+    if (!isLogin) {
+      if (!nameRegex.test(formData.name)) {
+        setError('Name must contain only alphabets and spaces');
+        setLoading(false);
+        return;
+      }
+      if (!rollNumberRegex.test(formData.rollNumber)) {
+        setError('Roll Number must be alphanumeric');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const endpoint = isLogin ? api.auth.login : api.auth.register;
       const res = await endpoint(formData);
@@ -318,7 +348,7 @@ function AuthPage({ setToken, setUser, setView }) {
           className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition mb-4 flex items-center justify-center space-x-2 disabled:opacity-50"
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
           <span>{connected ? 'Login with Aptos Wallet' : 'Connect Aptos Wallet'}</span>
         </button>
@@ -346,19 +376,19 @@ function AuthPage({ setToken, setUser, setView }) {
                 type="text"
                 placeholder="Full Name"
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
               <input
                 type="text"
                 placeholder="Roll Number"
                 value={formData.rollNumber}
-                onChange={(e) => setFormData({...formData, rollNumber: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="student">Student</option>
@@ -370,14 +400,14 @@ function AuthPage({ setToken, setUser, setView }) {
             type="email"
             placeholder="Email"
             value={formData.email}
-            onChange={(e) => setFormData({...formData, email: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
           <input
             type="password"
             placeholder="Password"
             value={formData.password}
-            onChange={(e) => setFormData({...formData, password: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
           <button
@@ -440,13 +470,13 @@ function StudentApp({ view, setView, token, user }) {
 
   const handleRedeem = async (rewardId) => {
     if (!confirm('Redeem this reward?')) return;
-    
+
     try {
       const res = await api.student.redeem(token, rewardId);
       const data = await res.json();
-      
+
       if (!res.ok) throw new Error(data.error);
-      
+
       alert('Reward redeemed successfully!');
       loadBalance();
       loadRewards();
@@ -505,8 +535,8 @@ function StudentApp({ view, setView, token, user }) {
         <div className="grid md:grid-cols-3 gap-6">
           {rewards.map(reward => (
             <div key={reward._id} className="bg-white rounded-xl shadow-lg overflow-hidden">
-              <img 
-                src={reward.imageUrl} 
+              <img
+                src={reward.imageUrl}
                 alt={reward.name}
                 className="w-full h-48 object-cover"
               />
@@ -618,7 +648,7 @@ function AdminApp({ view, setView, token }) {
 
   const handleUploadCSV = async () => {
     if (!uploadFile) return alert('Select a file');
-    
+
     const formData = new FormData();
     formData.append('file', uploadFile);
     formData.append('pointsPerAttendance', uploadPoints);
@@ -669,7 +699,7 @@ function AdminApp({ view, setView, token }) {
     return (
       <div className="space-y-6">
         <h2 className="text-3xl font-bold text-gray-800">Manage Rewards</h2>
-        
+
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <h3 className="text-xl font-bold mb-4">Create New Reward</h3>
           <div className="space-y-4">
@@ -677,26 +707,26 @@ function AdminApp({ view, setView, token }) {
               type="text"
               placeholder="Reward Name"
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-4 py-2 border rounded-lg"
             />
             <input
               type="text"
               placeholder="Description"
               value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-4 py-2 border rounded-lg"
             />
             <input
               type="number"
               placeholder="Points Cost"
               value={formData.pointsCost}
-              onChange={(e) => setFormData({...formData, pointsCost: parseInt(e.target.value) || 0})}
+              onChange={(e) => setFormData({ ...formData, pointsCost: parseInt(e.target.value) || 0 })}
               className="w-full px-4 py-2 border rounded-lg"
             />
             <select
               value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="w-full px-4 py-2 border rounded-lg"
             >
               <option value="food">Food</option>

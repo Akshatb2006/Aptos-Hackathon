@@ -13,11 +13,13 @@
     "@aptos-labs/ts-sdk": "^5.1.5",
     "@aptos-labs/wallet-adapter-ant-design": "^5.3.2",
     "@aptos-labs/wallet-adapter-react": "^7.2.2",
+    "@martianwallet/aptos-wallet-adapter": "^0.0.5",
     "@telegram-apps/bridge": "^2.11.0",
     "@wallet-standard/core": "^1.1.1",
     "aptos": "^1.22.1",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.555.0",
+    "petra-plugin-wallet-adapter": "^0.4.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6"
