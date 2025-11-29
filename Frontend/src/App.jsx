@@ -1,95 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Award, TrendingUp, Gift, Users, BarChart3, Upload, LogOut, Menu, X } from 'lucide-react';
-import { useWallet } from '@aptos-labs/wallet-adapter-react';
-// API Configuration
-const API_URL = 'http://localhost:5000/api';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import Landing from './components/landing';
+import Navbar from './components/Navbar';
+import AuthPage from './components/auth/AuthPage';
+import StudentApp from './components/student/StudentApp';
+import AdminApp from './components/admin/AdminApp';
+import api from './services/api';
 
-const api = {
-  auth: {
-    login: (data) => fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }),
-    register: (data) => fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }),
-    getMe: (token) => fetch(`${API_URL}/auth/me`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-  },
-  student: {
-    getBalance: (token) => fetch(`${API_URL}/student/balance`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }),
-    getLedger: (token) => fetch(`${API_URL}/student/ledger`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }),
-    getRewards: (token) => fetch(`${API_URL}/student/rewards`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }),
-    redeem: (token, rewardId) => fetch(`${API_URL}/student/redeem`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ rewardId })
-    }),
-    getRedemptions: (token) => fetch(`${API_URL}/student/redemptions`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }),
-    updateWallet: (token, walletAddress) => fetch(`${API_URL}/student/wallet`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ walletAddress })
-    })
-  },
-  admin: {
-    getAnalytics: (token) => fetch(`${API_URL}/admin/analytics`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }),
-    getRewards: (token) => fetch(`${API_URL}/admin/rewards`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }),
-    createReward: (token, data) => fetch(`${API_URL}/admin/rewards`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    }),
-    uploadAttendance: (token, formData) => fetch(`${API_URL}/admin/upload-attendance`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData
-    }),
-    getUsers: (token) => fetch(`${API_URL}/admin/users`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }),
-    awardPoints: (token, data) => fetch(`${API_URL}/admin/award-points`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
+// Protected Route Component
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    return <Navigate to="/login" replace />;
   }
-};
+  
+  return children;
+}
 
-// Main App Component
-export default function CampusWallet() {
+// Dashboard Component - handles authenticated users
+function Dashboard() {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [view, setView] = useState('login');
+  const [view, setView] = useState('dashboard');
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     if (token) {
@@ -101,37 +36,35 @@ export default function CampusWallet() {
         })
         .catch(() => {
           localStorage.removeItem('token');
-          setToken(null);
+          navigate('/login');
         })
         .finally(() => setLoading(false));
     } else {
-      setLoading(false);
+      navigate('/login');
     }
-  }, [token]);
+  }, [token, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-    setView('login');
+    navigate('/');
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-white"></div>
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500"></div>
       </div>
     );
   }
 
-  if (!token) {
-    return <AuthPage setToken={setToken} setUser={setUser} setView={setView} />;
+  if (!user) {
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-950 overflow-x-hidden">
       <Navbar user={user} view={view} setView={setView} onLogout={handleLogout} />
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full">
         {user?.role === 'student' ? (
           <StudentApp view={view} setView={setView} token={token} user={user} />
         ) : (
@@ -142,807 +75,35 @@ export default function CampusWallet() {
   );
 }
 
-// Navbar Component
-function Navbar({ user, view, setView, onLogout }) {
-  const [mobileMenu, setMobileMenu] = useState(false);
-
-  const menuItems = user?.role === 'admin'
-    ? [
-      { id: 'admin-dashboard', label: 'Dashboard', icon: BarChart3 },
-      { id: 'manage-students', label: 'Students', icon: Users },
-      { id: 'manage-rewards', label: 'Rewards', icon: Gift },
-      { id: 'upload-attendance', label: 'Upload', icon: Upload }
-    ]
-    : [
-      { id: 'student-dashboard', label: 'Wallet', icon: Wallet },
-      { id: 'marketplace', label: 'Marketplace', icon: Gift },
-      { id: 'ledger', label: 'History', icon: TrendingUp }
-    ];
-
+// Main App Component with Router
+export default function CampusWallet() {
   return (
-    <nav className="bg-white shadow-lg">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-2">
-            <Wallet className="w-8 h-8 text-indigo-600" />
-            <span className="text-xl font-bold text-gray-800">Campus Wallet</span>
-          </div>
-
-          <div className="hidden md:flex items-center space-x-6">
-            {menuItems.map(item => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setView(item.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${view === item.id
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-            <button
-              onClick={onLogout}
-              className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
-          </div>
-
-          <button className="md:hidden" onClick={() => setMobileMenu(!mobileMenu)}>
-            {mobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-
-        {mobileMenu && (
-          <div className="md:hidden pb-4">
-            {menuItems.map(item => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => { setView(item.id); setMobileMenu(false); }}
-                  className={`flex items-center space-x-2 w-full px-4 py-3 ${view === item.id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
-                    }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-            <button
-              onClick={onLogout}
-              className="flex items-center space-x-2 w-full px-4 py-3 text-red-600"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
-          </div>
-        )}
-      </div>
-    </nav>
+    <BrowserRouter>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Landing />} />
+        <Route 
+          path="/login" 
+          element={<AuthPage mode="login" />} 
+        />
+        <Route 
+          path="/signup" 
+          element={<AuthPage mode="signup" />} 
+        />
+        
+        {/* Protected Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Catch all - redirect to landing */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
-}
-
-// Auth Page
-
-function AuthPage({ setToken, setUser, setView }) {
-  const { connect, account, connected, disconnect, wallets } = useWallet();
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    name: '',
-    rollNumber: '',
-    role: 'student'
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-
-
-  // Regular email/password login
-  const handleSubmit = async () => {
-    setError('');
-    setLoading(true);
-
-    // Regex Patterns
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/; // Min 8 chars, 1 letter, 1 number
-    const nameRegex = /^[a-zA-Z\s]+$/;
-    const rollNumberRegex = /^[a-zA-Z0-9]+$/;
-
-    // Validation
-    if (!emailRegex.test(formData.email)) {
-      setError('Invalid email address');
-      setLoading(false);
-      return;
-    }
-
-    if (!passwordRegex.test(formData.password)) {
-      setError('Password must be at least 8 characters long and contain at least one letter and one number');
-      setLoading(false);
-      return;
-    }
-
-    if (!isLogin) {
-      if (!nameRegex.test(formData.name)) {
-        setError('Name must contain only alphabets and spaces');
-        setLoading(false);
-        return;
-      }
-      if (!rollNumberRegex.test(formData.rollNumber)) {
-        setError('Roll Number must be alphanumeric');
-        setLoading(false);
-        return;
-      }
-    }
-
-    try {
-      const endpoint = isLogin ? api.auth.login : api.auth.register;
-      const res = await endpoint(formData);
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error);
-
-      localStorage.setItem('token', data.token);
-      setToken(data.token);
-      setUser(data.user);
-      setView(data.user.role === 'admin' ? 'admin-dashboard' : 'student-dashboard');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-        <div className="flex items-center justify-center mb-8">
-          <Wallet className="w-12 h-12 text-indigo-600" />
-        </div>
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
-          Campus Wallet
-        </h2>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
-            {error}
-          </div>
-        )}
-
-
-
-
-
-
-
-        {/* Email/Password Form */}
-        <div className="space-y-4">
-          {!isLogin && (
-            <>
-              <input
-                type="text"
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-              <input
-                type="text"
-                placeholder="Roll Number"
-                value={formData.rollNumber}
-                onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                <option value="student">Student</option>
-                <option value="admin">Admin</option>
-              </select>
-            </>
-          )}
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
-          >
-            {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Register')}
-          </button>
-        </div>
-
-        <p className="text-center mt-6 text-gray-600">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-indigo-600 font-semibold hover:underline"
-          >
-            {isLogin ? 'Register' : 'Login'}
-          </button>
-        </p>
-      </div>
-    </div>
-  );
-}
-// Student App
-function StudentApp({ view, setView, token, user }) {
-  const { connect, account, connected, wallets } = useWallet();
-  const [balance, setBalance] = useState(0);
-  const [ledger, setLedger] = useState([]);
-  const [rewards, setRewards] = useState([]);
-  const [redemptions, setRedemptions] = useState([]);
-
-  useEffect(() => {
-    loadBalance();
-    loadRewards();
-  }, []);
-
-  const loadBalance = async () => {
-    const res = await api.student.getBalance(token);
-    const data = await res.json();
-    setBalance(data.balance);
-  };
-
-  const loadLedger = async () => {
-    const res = await api.student.getLedger(token);
-    const data = await res.json();
-    setLedger(data);
-  };
-
-  const loadRewards = async () => {
-    const res = await api.student.getRewards(token);
-    const data = await res.json();
-    setRewards(data);
-  };
-
-  const loadRedemptions = async () => {
-    const res = await api.student.getRedemptions(token);
-    const data = await res.json();
-    setRedemptions(data);
-  };
-
-  const handleRedeem = async (rewardId) => {
-    if (!confirm('Redeem this reward?')) return;
-
-    try {
-      const res = await api.student.redeem(token, rewardId);
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error);
-
-      alert('Reward redeemed successfully!');
-      loadBalance();
-      loadRewards();
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  const handleConnectWallet = async () => {
-    try {
-      // Filter for wallets that are actually installed in the browser
-      const installedWallets = wallets?.filter(wallet =>
-        wallet.readyState === 'Installed' || wallet.readyState === 'Loadable'
-      ) || [];
-
-      console.log('Available wallets:', wallets);
-      console.log('Installed wallets:', installedWallets);
-
-      if (installedWallets.length > 0) {
-        // Try to connect to the first installed wallet
-        await connect(installedWallets[0].name);
-        // Note: account might not be immediately available here due to async state update
-        // We should probably use a useEffect to watch for 'connected' and 'account' changes to sync with backend
-      } else {
-        // Show a more helpful error message
-        alert('Please install Petra or Martian wallet extension in your browser.\n\nPetra: https://petra.app/\nMartian: https://martianwallet.xyz/');
-      }
-    } catch (err) {
-      console.error('Wallet connection error:', err);
-      alert('Failed to connect wallet: ' + err.message);
-    }
-  };
-
-  // Sync wallet with backend when connected
-  useEffect(() => {
-    if (connected && account?.address) {
-      api.student.updateWallet(token, String(account.address))
-        .catch(err => console.error("Failed to sync wallet", err));
-    }
-  }, [connected, account, token]);
-
-  if (view === 'student-dashboard') {
-    return (
-      <div className="space-y-6">
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-white">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Welcome, {user.name}!</h1>
-              <p className="text-indigo-100 mb-6">Your Campus Wallet Balance</p>
-            </div>
-            {!connected ? (
-              <div className="space-y-2">
-                <button
-                  onClick={handleConnectWallet}
-                  className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition"
-                >
-                  Connect Wallet
-                </button>
-                {wallets && wallets.filter(w => w.readyState === 'Installed' || w.readyState === 'Loadable').length === 0 && (
-                  <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 mt-2 max-w-xs">
-                    <p className="text-xs text-yellow-900 font-semibold mb-2">⚠️ No wallet detected</p>
-                    <p className="text-xs text-yellow-800 mb-2">Please install a wallet extension:</p>
-                    <div className="flex gap-2">
-                      <a
-                        href="https://petra.app/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs bg-white text-indigo-600 px-2 py-1 rounded hover:bg-indigo-50 transition"
-                      >
-                        Get Petra
-                      </a>
-                      <a
-                        href="https://martianwallet.xyz/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs bg-white text-purple-600 px-2 py-1 rounded hover:bg-purple-50 transition"
-                      >
-                        Get Martian
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="bg-indigo-500 bg-opacity-50 px-4 py-2 rounded-lg">
-                <p className="text-xs text-indigo-200">Wallet Connected</p>
-                <p className="font-mono text-sm">
-                  {account?.address ? `${String(account.address).slice(0, 6)}...${String(account.address).slice(-4)}` : 'Loading...'}
-                </p>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center space-x-4">
-            <Award className="w-12 h-12" />
-            <span className="text-5xl font-bold">{balance}</span>
-            <span className="text-xl">Points</span>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <button
-            onClick={() => setView('marketplace')}
-            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition"
-          >
-            <Gift className="w-12 h-12 text-indigo-600 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800">Marketplace</h3>
-            <p className="text-gray-600">Redeem rewards</p>
-          </button>
-          <button
-            onClick={() => { setView('ledger'); loadLedger(); }}
-            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition"
-          >
-            <TrendingUp className="w-12 h-12 text-green-600 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800">History</h3>
-            <p className="text-gray-600">View transactions</p>
-          </button>
-          <button
-            onClick={() => { loadRedemptions(); setView('redemptions'); }}
-            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition"
-          >
-            <Award className="w-12 h-12 text-purple-600 mb-4" />
-            <h3 className="text-xl font-bold text-gray-800">My Redemptions</h3>
-            <p className="text-gray-600">QR codes</p>
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (view === 'marketplace') {
-    return (
-      <div>
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">Marketplace</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          {rewards.map(reward => (
-            <div key={reward._id} className="bg-white rounded-xl shadow-lg overflow-hidden">
-              <img
-                src={reward.imageUrl}
-                alt={reward.name}
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-2">{reward.name}</h3>
-                <p className="text-gray-600 mb-4">{reward.description}</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-2xl font-bold text-indigo-600">{reward.pointsCost} pts</span>
-                  <button
-                    onClick={() => handleRedeem(reward._id)}
-                    disabled={balance < reward.pointsCost}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                  >
-                    Redeem
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (view === 'ledger') {
-    return (
-      <div>
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">Transaction History</h2>
-        <div className="bg-white rounded-xl shadow-lg">
-          {ledger.map(entry => (
-            <div key={entry._id} className="border-b last:border-b-0 p-4 flex justify-between items-center">
-              <div>
-                <p className="font-semibold text-gray-800">{entry.description}</p>
-                <p className="text-sm text-gray-500">{new Date(entry.timestamp).toLocaleString()}</p>
-              </div>
-              <span className={`text-lg font-bold ${entry.type === 'EARN' ? 'text-green-600' : 'text-red-600'}`}>
-                {entry.type === 'EARN' ? '+' : '-'}{entry.amount}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (view === 'redemptions') {
-    return (
-      <div>
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">My Redemptions</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {redemptions.map(red => (
-            <div key={red._id} className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold mb-4">{red.rewardId?.name}</h3>
-              {red.qrCode && <img src={red.qrCode} alt="QR Code" className="w-64 h-64 mx-auto mb-4" />}
-              <p className="text-center font-mono text-sm">{red.redemptionCode}</p>
-              <p className="text-center text-sm text-gray-500 mt-2">Status: {red.status}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-}
-
-// Admin App
-function AdminApp({ view, setView, token }) {
-  const { signAndSubmitTransaction } = useWallet();
-  const [analytics, setAnalytics] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [rewards, setRewards] = useState([]);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    pointsCost: 0,
-    category: 'food',
-    stock: -1
-  });
-  const [uploadFile, setUploadFile] = useState(null);
-  const [uploadPoints, setUploadPoints] = useState(10);
-
-  useEffect(() => {
-    loadAnalytics();
-    loadRewards();
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    try {
-      const res = await api.admin.getUsers(token);
-      const data = await res.json();
-      setUsers(data);
-    } catch (err) {
-      console.error("Failed to load users", err);
-    }
-  };
-
-  const handleAwardPoints = async (user, amount) => {
-    if (!amount || amount <= 0) return alert('Invalid amount');
-
-    try {
-      // First update backend for record keeping
-      const res = await api.admin.awardPoints(token, {
-        userId: user._id,
-        points: parseInt(amount),
-        description: 'Awarded by Admin'
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to award points');
-      }
-
-      // If user has wallet, try to mint on chain
-      if (user.walletAddress) {
-        try {
-          const payload = {
-            data: {
-              function: "0x1::campus_coin::mint",
-              typeArguments: [],
-              functionArguments: [user.walletAddress, amount]
-            }
-          };
-
-          await signAndSubmitTransaction(payload);
-          alert('Points awarded on-chain and in database!');
-        } catch (txError) {
-          console.error('Blockchain transaction failed:', txError);
-          alert('Points awarded in database, but blockchain transaction failed. Please check if the contract is deployed and you have admin permissions.');
-        }
-      } else {
-        alert('Points awarded successfully! (Student has not connected wallet yet)');
-      }
-
-      loadUsers();
-      loadAnalytics();
-    } catch (err) {
-      console.error(err);
-      alert('Error awarding points: ' + err.message);
-    }
-  };
-
-  const loadAnalytics = async () => {
-    const res = await api.admin.getAnalytics(token);
-    const data = await res.json();
-    setAnalytics(data);
-  };
-
-  const loadRewards = async () => {
-    const res = await api.admin.getRewards(token);
-    const data = await res.json();
-    setRewards(data);
-  };
-
-  const handleCreateReward = async () => {
-    try {
-      const res = await api.admin.createReward(token, formData);
-      if (!res.ok) throw new Error('Failed to create reward');
-      alert('Reward created!');
-      loadRewards();
-      setFormData({ name: '', description: '', pointsCost: 0, category: 'food', stock: -1 });
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  const handleUploadCSV = async () => {
-    if (!uploadFile) return alert('Select a file');
-
-    const formData = new FormData();
-    formData.append('file', uploadFile);
-    formData.append('pointsPerAttendance', uploadPoints);
-
-    try {
-      const res = await api.admin.uploadAttendance(token, formData);
-      const data = await res.json();
-      alert(`Processed: ${data.processed}, Errors: ${data.errors}`);
-      setUploadFile(null);
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  if (view === 'admin-dashboard') {
-    return (
-      <div className="space-y-6">
-        <h2 className="text-3xl font-bold text-gray-800">Admin Dashboard</h2>
-        {analytics && (
-          <div className="grid md:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <Users className="w-12 h-12 text-indigo-600 mb-4" />
-              <p className="text-gray-600">Total Students</p>
-              <p className="text-3xl font-bold">{analytics.totalUsers}</p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <Award className="w-12 h-12 text-green-600 mb-4" />
-              <p className="text-gray-600">Points Issued</p>
-              <p className="text-3xl font-bold">{analytics.totalPointsIssued}</p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <Gift className="w-12 h-12 text-purple-600 mb-4" />
-              <p className="text-gray-600">Redemptions</p>
-              <p className="text-3xl font-bold">{analytics.totalRedemptions}</p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <TrendingUp className="w-12 h-12 text-orange-600 mb-4" />
-              <p className="text-gray-600">Active Rewards</p>
-              <p className="text-3xl font-bold">{analytics.activeRewards}</p>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (view === 'manage-students') {
-    return (
-      <div className="space-y-6">
-        <h2 className="text-3xl font-bold text-gray-800">Manage Students</h2>
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wallet</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {users.filter(user => user.role === 'student').map(user => (
-                  <tr key={user._id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{user.name}</div>
-                      <div className="text-sm text-gray-500">{user.rollNumber}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap font-mono text-xs text-gray-500">
-                      {user.walletAddress ? (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                          {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
-                        </span>
-                      ) : (
-                        <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full">Not Connected</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => {
-                          const amount = prompt('Enter amount to award:');
-                          if (amount) handleAwardPoints(user, parseInt(amount));
-                        }}
-                        className="text-indigo-600 hover:text-indigo-900 font-medium bg-indigo-50 px-3 py-1 rounded-lg transition hover:bg-indigo-100"
-                      >
-                        Award Points
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (view === 'manage-rewards') {
-    return (
-      <div className="space-y-6">
-        <h2 className="text-3xl font-bold text-gray-800">Manage Rewards</h2>
-
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <h3 className="text-xl font-bold mb-4">Create New Reward</h3>
-          <div className="space-y-4">
-            <input
-              type="text"
-              placeholder="Reward Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg"
-            />
-            <input
-              type="text"
-              placeholder="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg"
-            />
-            <input
-              type="number"
-              placeholder="Points Cost"
-              value={formData.pointsCost}
-              onChange={(e) => setFormData({ ...formData, pointsCost: parseInt(e.target.value) || 0 })}
-              className="w-full px-4 py-2 border rounded-lg"
-            />
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg"
-            >
-              <option value="food">Food</option>
-              <option value="subscription">Subscription</option>
-              <option value="event">Event</option>
-              <option value="coupon">Coupon</option>
-            </select>
-            <button
-              onClick={handleCreateReward}
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700"
-            >
-              Create Reward
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <h3 className="text-xl font-bold mb-4">Existing Rewards</h3>
-          <div className="space-y-4">
-            {rewards.map(reward => (
-              <div key={reward._id} className="border p-4 rounded-lg flex justify-between items-center">
-                <div>
-                  <h4 className="font-bold">{reward.name}</h4>
-                  <p className="text-sm text-gray-600">{reward.pointsCost} points</p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-sm ${reward.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {reward.active ? 'Active' : 'Inactive'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (view === 'upload-attendance') {
-    return (
-      <div className="space-y-6">
-        <h2 className="text-3xl font-bold text-gray-800">Upload Attendance</h2>
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">CSV File (email or rollNumber column required)</label>
-              <input
-                type="file"
-                accept=".csv"
-                onChange={(e) => setUploadFile(e.target.files[0])}
-                className="w-full px-4 py-2 border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Points Per Attendance</label>
-              <input
-                type="number"
-                value={uploadPoints}
-                onChange={(e) => setUploadPoints(parseInt(e.target.value) || 10)}
-                className="w-full px-4 py-2 border rounded-lg"
-              />
-            </div>
-            <button
-              onClick={handleUploadCSV}
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700"
-            >
-              Upload & Process
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
 }

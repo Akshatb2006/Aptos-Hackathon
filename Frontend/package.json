@@ -17,12 +17,16 @@
     "@telegram-apps/bridge": "^2.11.0",
     "@wallet-standard/core": "^1.1.1",
     "aptos": "^1.22.1",
+    "framer-motion": "^12.23.24",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.555.0",
     "petra-plugin-wallet-adapter": "^0.4.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.9.6"
+    "react-intersection-observer": "^10.0.0",
+    "react-router-dom": "^7.9.6",
+    "three": "^0.181.2",
+    "vanta": "^0.5.24"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
