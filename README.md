@@ -104,9 +104,9 @@ Aptos Blockchain + Move Token + Decibel + Shelby/Geomi
 
 | Layer | Tech |
 |-------|------|
-| **Frontend** | Next.js + Tailwind + Photon SDK |
+| **Frontend** | React.js + Tailwind + Photon SDK |
 | **Backend** | Node.js + Express/NestJS |
-| **Database** | PostgreSQL + Redis |
+| **Database** | MongoDB + Redis |
 | **Ledger Model** | Event Sourcing Pattern |
 | **Optional** | Aptos Move + Decibel + Geomi/Shelby RPC |
 
