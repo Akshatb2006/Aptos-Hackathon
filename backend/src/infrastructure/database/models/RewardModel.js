@@ -9,7 +9,7 @@ const rewardSchema = new mongoose.Schema({
     enum: ['food', 'subscription', 'event', 'coupon', 'merchandise'], 
     default: 'food' 
   },
-  stock: { type: Number, default: -1 }, // -1 = unlimited
+  stock: { type: Number, default: -1 }, 
   active: { type: Boolean, default: true },
   imageUrl: { type: String, default: 'https://via.placeholder.com/300' },
   createdAt: { type: Date, default: Date.now }

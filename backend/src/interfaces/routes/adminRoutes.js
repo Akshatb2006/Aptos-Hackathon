@@ -9,10 +9,8 @@ const RewardModel = require('../../infrastructure/database/models/RewardModel');
 const LedgerModel = require('../../infrastructure/database/models/LedgerModel');
 const RedemptionModel = require('../../infrastructure/database/models/RedemptionModel');
 
-// Setup file upload
 const upload = multer({ dest: 'uploads/' });
 
-// Award points manually
 router.post('/award-points', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { userId, points, description } = req.body;
@@ -43,13 +41,11 @@ router.post('/award-points', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-// Upload attendance CSV
 router.post('/upload-attendance', authMiddleware, adminOnly, upload.single('file'), async (req, res) => {
   try {
     const results = [];
     const pointsPerAttendance = parseInt(req.body.pointsPerAttendance) || 10;
 
-    // Read CSV file
     fs.createReadStream(req.file.path)
       .pipe(csv())
       .on('data', (data) => results.push(data))
@@ -59,7 +55,6 @@ router.post('/upload-attendance', authMiddleware, adminOnly, upload.single('file
           const errors = [];
 
           for (const row of results) {
-            // Expecting CSV with columns: email or rollNumber
             const identifier = row.email || row.rollNumber;
             if (!identifier) {
               errors.push({ row, error: 'Missing identifier' });
@@ -97,7 +92,6 @@ router.post('/upload-attendance', authMiddleware, adminOnly, upload.single('file
             });
           }
 
-          // Delete uploaded file
           fs.unlinkSync(req.file.path);
 
           res.json({
@@ -116,7 +110,6 @@ router.post('/upload-attendance', authMiddleware, adminOnly, upload.single('file
   }
 });
 
-// Create new reward
 router.post('/rewards', authMiddleware, adminOnly, async (req, res) => {
   try {
     const reward = new RewardModel(req.body);
@@ -127,7 +120,6 @@ router.post('/rewards', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-// Update reward
 router.put('/rewards/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
     const reward = await RewardModel.findByIdAndUpdate(
@@ -144,7 +136,6 @@ router.put('/rewards/:id', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-// Delete reward
 router.delete('/rewards/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
     const reward = await RewardModel.findByIdAndDelete(req.params.id);
@@ -157,7 +148,6 @@ router.delete('/rewards/:id', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-// Get all rewards (including inactive)
 router.get('/rewards', authMiddleware, adminOnly, async (req, res) => {
   try {
     const rewards = await RewardModel.find();
@@ -167,7 +157,6 @@ router.get('/rewards', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-// Get all users
 router.get('/users', authMiddleware, adminOnly, async (req, res) => {
   try {
     const users = await UserModel.find().select('-password');
@@ -177,7 +166,6 @@ router.get('/users', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-// Analytics - Dashboard stats
 router.get('/analytics', authMiddleware, adminOnly, async (req, res) => {
   try {
     const totalUsers = await UserModel.countDocuments({ role: 'student' });
@@ -192,13 +180,11 @@ router.get('/analytics', authMiddleware, adminOnly, async (req, res) => {
     const totalRedemptions = await RedemptionModel.countDocuments();
     const activeRewards = await RewardModel.countDocuments({ active: true });
 
-    // Top students by balance
     const topStudents = await UserModel.find({ role: 'student' })
       .sort({ walletBalance: -1 })
       .limit(10)
       .select('name email walletBalance');
 
-    // Popular rewards
     const popularRewards = await RedemptionModel.aggregate([
       {
         $group: {
@@ -211,7 +197,6 @@ router.get('/analytics', authMiddleware, adminOnly, async (req, res) => {
       { $limit: 5 }
     ]);
 
-    // Populate reward details
     await RewardModel.populate(popularRewards, { path: '_id' });
 
     res.json({
@@ -228,7 +213,6 @@ router.get('/analytics', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-// Get all redemptions
 router.get('/redemptions', authMiddleware, adminOnly, async (req, res) => {
   try {
     const redemptions = await RedemptionModel.find()
@@ -241,7 +225,6 @@ router.get('/redemptions', authMiddleware, adminOnly, async (req, res) => {
   }
 });
 
-// Verify/Use redemption (scan QR)
 router.post('/verify-redemption', authMiddleware, adminOnly, async (req, res) => {
   try {
     const { redemptionCode } = req.body;

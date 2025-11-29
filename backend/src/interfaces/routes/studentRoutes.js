@@ -7,7 +7,6 @@ const LedgerModel = require('../../infrastructure/database/models/LedgerModel');
 const RedemptionModel = require('../../infrastructure/database/models/RedemptionModel');
 const QRCode = require('qrcode');
 
-// Get wallet balance
 router.get('/balance', authMiddleware, async (req, res) => {
     try {
         const user = await UserModel.findById(req.userId);
@@ -17,7 +16,6 @@ router.get('/balance', authMiddleware, async (req, res) => {
     }
 });
 
-// Get transaction ledger
 router.get('/ledger', authMiddleware, async (req, res) => {
     try {
         const ledger = await LedgerModel.find({ userId: req.userId })
@@ -29,7 +27,6 @@ router.get('/ledger', authMiddleware, async (req, res) => {
     }
 });
 
-// Get all available rewards
 router.get('/rewards', authMiddleware, async (req, res) => {
     try {
         const rewards = await RewardModel.find({ active: true });
@@ -39,7 +36,6 @@ router.get('/rewards', authMiddleware, async (req, res) => {
     }
 });
 
-// Redeem a reward
 router.post('/redeem', authMiddleware, async (req, res) => {
     try {
         const { rewardId } = req.body;
@@ -63,17 +59,14 @@ router.post('/redeem', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Insufficient balance' });
         }
 
-        // Deduct points
         user.walletBalance -= reward.pointsCost;
         await user.save();
 
-        // Update stock
         if (reward.stock > 0) {
             reward.stock -= 1;
             await reward.save();
         }
 
-        // Create ledger entry
         const ledgerEntry = new LedgerModel({
             userId: user._id,
             type: 'REDEEM',
@@ -83,10 +76,8 @@ router.post('/redeem', authMiddleware, async (req, res) => {
         });
         await ledgerEntry.save();
 
-        // Generate unique redemption code
         const redemptionCode = `CW-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-        // Generate QR Code
         const qrData = JSON.stringify({
             code: redemptionCode,
             userId: user._id,
@@ -95,7 +86,6 @@ router.post('/redeem', authMiddleware, async (req, res) => {
         });
         const qrCode = await QRCode.toDataURL(qrData);
 
-        // Create redemption record
         const redemption = new RedemptionModel({
             userId: user._id,
             rewardId: reward._id,
@@ -120,7 +110,6 @@ router.post('/redeem', authMiddleware, async (req, res) => {
     }
 });
 
-// Get redemption history
 router.get('/redemptions', authMiddleware, async (req, res) => {
     try {
         const redemptions = await RedemptionModel.find({ userId: req.userId })
@@ -132,7 +121,6 @@ router.get('/redemptions', authMiddleware, async (req, res) => {
     }
 });
 
-// Get specific redemption (for QR display)
 router.get('/redemptions/:id', authMiddleware, async (req, res) => {
     try {
         const redemption = await RedemptionModel.findOne({
@@ -150,7 +138,6 @@ router.get('/redemptions/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// Update wallet address
 router.put('/wallet', authMiddleware, async (req, res) => {
     try {
         const { walletAddress } = req.body;

@@ -4,12 +4,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const UserModel = require('../../infrastructure/database/models/UserModel');
 
-// Register
 router.post('/register', async (req, res) => {
     try {
         const { email, password, name, rollNumber, role } = req.body;
 
-        // Regex Patterns
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
         const nameRegex = /^[a-zA-Z\s]+$/;
@@ -59,7 +57,6 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Login
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -98,7 +95,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Get current user
 router.get('/me', async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
@@ -132,11 +128,9 @@ router.post('/keyless-login', async (req, res) => {
             return res.status(400).json({ error: 'Invalid wallet address' });
         }
 
-        // Check if user exists by wallet address
         let user = await UserModel.findOne({ walletAddress });
 
         if (!user) {
-            // Create new user with keyless auth
             user = new UserModel({
                 email: email || `${walletAddress.slice(0, 8)}@aptos.wallet`,
                 name: name || `User ${walletAddress.slice(0, 6)}`,
@@ -144,7 +138,7 @@ router.post('/keyless-login', async (req, res) => {
                 authMethod: 'keyless',
                 role: 'student',
                 walletBalance: 0,
-                password: Math.random().toString(36) // Random password (not used)
+                password: Math.random().toString(36) 
             });
             await user.save();
         }
