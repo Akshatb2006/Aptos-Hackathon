@@ -5,6 +5,15 @@
   text-align: center;
 }
 
+/* Add to your global CSS or style tag */
+.vanta-canvas {
+  opacity: 0.8 !important;
+}
+
+.vanta-net {
+  mix-blend-mode: screen !important;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;

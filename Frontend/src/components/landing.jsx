@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Wallet, ArrowRight, ChevronRight, Shield, Zap, Users, Award, CheckCircle, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import Particles from 'react-tsparticles';
+import { loadSlim } from 'tsparticles-slim';
 
 // Custom components for better organization
 const AnimatedCard = ({ children, delay = 0 }) => {
@@ -130,70 +132,15 @@ const NavbarParticles = () => {
   );
 };
 
-// Vanta Waves Component for CTA Section with Footer
-const VantaWavesSection = () => {
-  const [vantaEffect, setVantaEffect] = useState(null);
-  const vantaRef = useRef(null);
-  const [vantaLoaded, setVantaLoaded] = useState(false);
-
-  useEffect(() => {
-    let effect = null;
-
-    const initVanta = async () => {
-      try {
-        // Import THREE and make it globally available
-        const THREE = await import('three');
-        if (!window.THREE) window.THREE = THREE;
-        
-        // Dynamically import Vanta WAVES
-        const { default: WAVES } = await import('vanta/dist/vanta.waves.min');
-        
-        effect = WAVES({
-          el: vantaRef.current,
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: 200.00,
-          minWidth: 200.00,
-          scale: 1.00,
-          scaleMobile: 1.00,
-          shininess: 90.00,
-          waveHeight: 18.00,
-          waveSpeed: 1.10,
-          zoom: 0.90,
-          color: 0x0a0a0a,
-          backgroundColor: 0x05020b
-        });
-        
-        setVantaEffect(effect);
-        setVantaLoaded(true);
-      } catch (error) {
-        console.error('Failed to load Vanta WAVES:', error);
-        setVantaLoaded(true);
-      }
-    };
-
-    if (typeof window !== 'undefined') {
-      initVanta();
-    }
-
-    return () => {
-      if (effect) {
-        effect.destroy();
-      }
-    };
-  }, []);
-
+// CTA Section with Footer
+const CTASection = () => {
   return (
     <section className="relative overflow-hidden">
-      {/* Vanta.js WAVES Background Container */}
-      <div ref={vantaRef} className="absolute inset-0 z-0">
-        {/* Fallback background */}
-        {!vantaLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-black">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-600/10 via-gray-900/80 to-black" />
-          </div>
-        )}
+      {/* Background Container */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-black">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-600/10 via-gray-900/80 to-black" />
+        </div>
       </div>
       
       {/* Top Gradient Blur Transition */}
@@ -291,67 +238,15 @@ const VantaWavesSection = () => {
   );
 };
 
-// Vanta Cells Component for Features Section
-const VantaCellsSection = () => {
-  const [vantaEffect, setVantaEffect] = useState(null);
-  const vantaRef = useRef(null);
-  const [vantaLoaded, setVantaLoaded] = useState(false);
-
-  useEffect(() => {
-    let effect = null;
-
-    const initVanta = async () => {
-      try {
-        // Import THREE and make it globally available
-        const THREE = await import('three');
-        if (!window.THREE) window.THREE = THREE;
-        
-        // Dynamically import Vanta CELLS
-        const { default: CELLS } = await import('vanta/dist/vanta.cells.min');
-        
-        effect = CELLS({
-          el: vantaRef.current,
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: 200.00,
-          minWidth: 200.00,
-          scale: 1.00,
-          color1: 0x0,
-          color2: 0xb0b36,
-          size: 2.40,
-          speed: 3.00
-        });
-        
-        setVantaEffect(effect);
-        setVantaLoaded(true);
-      } catch (error) {
-        console.error('Failed to load Vanta CELLS:', error);
-        setVantaLoaded(true);
-      }
-    };
-
-    if (typeof window !== 'undefined') {
-      initVanta();
-    }
-
-    return () => {
-      if (effect) {
-        effect.destroy();
-      }
-    };
-  }, []);
-
+// Features Section
+const FeaturesSection = () => {
   return (
     <section className="py-20 relative overflow-hidden">
-      {/* Vanta.js CELLS Background Container */}
-      <div ref={vantaRef} className="absolute inset-0 z-0">
-        {/* Fallback background */}
-        {!vantaLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-gray-950">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-800/10 via-gray-950/80 to-gray-950" />
-          </div>
-        )}
+      {/* Background Container */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-gray-950">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-800/10 via-gray-950/80 to-gray-950" />
+        </div>
       </div>
       
       {/* Top Gradient Blur Transition */}
@@ -558,69 +453,89 @@ const StarField = () => {
   );
 };
 
-const VantaHeroSection = () => {
-  const [vantaEffect, setVantaEffect] = useState(null);
-  const vantaRef = useRef(null);
-  const [vantaLoaded, setVantaLoaded] = useState(false);
-
-  useEffect(() => {
-    let effect = null;
-
-    const initVanta = async () => {
-      try {
-        // Import THREE and make it globally available
-        const THREE = await import('three');
-        if (!window.THREE) window.THREE = THREE;
-        
-        // Dynamically import Vanta to avoid SSR issues
-        const { default: NET } = await import('vanta/dist/vanta.net.min');
-        
-        effect = NET({
-          el: vantaRef.current,
-          mouseControls: true,
-          touchControls: true,
-          gyroControls: false,
-          minHeight: 200.00,
-          minWidth: 200.00,
-          scale: 1.00,
-          scaleMobile: 1.00,
-          color:0x141da2,
-          backgroundColor: 0x05020b,
-          points: 18,
-          maxDistance: 20,
-          spacing: 15,
-          showDots: true
-        });
-        
-        setVantaEffect(effect);
-        setVantaLoaded(true);
-      } catch (error) {
-        console.error('Failed to load Vanta.js:', error);
-        setVantaLoaded(true);
-      }
-    };
-
-    if (typeof window !== 'undefined') {
-      initVanta();
-    }
-
-    return () => {
-      if (effect) {
-        effect.destroy();
-      }
-    };
+const HeroSection = () => {
+  const particlesInit = useCallback(async engine => {
+    await loadSlim(engine);
   }, []);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Vanta.js Background Container */}
-      <div ref={vantaRef} className="absolute inset-0 z-0">
-        {/* Fallback background in case Vanta fails to load */}
-        {!vantaLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-purple-900 to-black">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-600/20 via-gray-900/80 to-black" />
-          </div>
-        )}
+      {/* Particles.js Background Container */}
+      <div className="absolute inset-0 z-0">
+        <Particles
+          id="tsparticles"
+          init={particlesInit}
+          options={{
+            background: {
+              color: {
+                value: "#000000",
+              },
+            },
+            fpsLimit: 120,
+            interactivity: {
+              events: {
+                onClick: {
+                  enable: true,
+                  mode: "push",
+                },
+                onHover: {
+                  enable: true,
+                  mode: "repulse",
+                },
+                resize: true,
+              },
+              modes: {
+                push: {
+                  quantity: 4,
+                },
+                repulse: {
+                  distance: 200,
+                  duration: 0.4,
+                },
+              },
+            },
+            particles: {
+              color: {
+                value: "#ffffff",
+              },
+              links: {
+                color: "#ffffff",
+                distance: 150,
+                enable: true,
+                opacity: 0.5,
+                width: 1,
+              },
+              move: {
+                direction: "none",
+                enable: true,
+                outModes: {
+                  default: "bounce",
+                },
+                random: false,
+                speed: 6,
+                straight: false,
+              },
+              number: {
+                density: {
+                  enable: true,
+                  area: 800,
+                },
+                value: 80,
+              },
+              opacity: {
+                value: 0.5,
+              },
+              shape: {
+                type: "circle",
+              },
+              size: {
+                value: { min: 1, max: 5 },
+              },
+            },
+            detectRetina: true,
+          }}
+          className="absolute inset-0"
+        />
       </div>
       
       {/* Bottom Gradient Blur Transition */}
@@ -855,14 +770,14 @@ const Landing = () => {
 
       {/* Add padding to account for fixed navbar */}
       <div className="pt-24">
-        <VantaHeroSection />
+        <HeroSection />
       </div>
 
-      {/* Features Section with Vanta CELLS */}
-      <VantaCellsSection />
+      {/* Features Section */}
+      <FeaturesSection />
 
-      {/* CTA Section with Vanta WAVES (includes footer) */}
-      <VantaWavesSection />
+      {/* CTA Section (includes footer) */}
+      <CTASection />
     </div>
   );
 };
