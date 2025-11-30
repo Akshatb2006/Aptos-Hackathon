@@ -43,4 +43,5 @@ module campus_wallet::campus_coin {
         let coins = coin::withdraw<CampusCoin>(admin, amount);
         coin::burn(coins, &caps.burn_cap);
     }
+
 }
