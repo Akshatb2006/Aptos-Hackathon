@@ -39,3 +39,5 @@ app.use('/api/admin', adminRoutes);
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date() });
 });
+
+// server
